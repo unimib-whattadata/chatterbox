@@ -6,9 +6,10 @@ COPY . .
 
 ENV PIP_PREFER_BINARY=1
 
-# Upgrade pip, setuptools, wheel, and build tools
-# Explicitly install ml_dtypes and numpy first to ensure compatibility and prefer binaries
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel build &&     pip install --no-cache-dir "ml_dtypes>=0.5.0" "numpy>=1.24.0,<2.0.0" &&     pip install --no-cache-dir fastapi uvicorn pydantic python-multipart &&     pip install --no-cache-dir -e .
+# Upgrade pip and build tools
+# Force uninstall existing numpy/ml_dtypes to avoid conflicts with system versions (e.g. numpy 2.x)
+# Then install compatible versions
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel build &&     pip uninstall -y numpy ml_dtypes || true &&     pip install --no-cache-dir "numpy>=1.24.0,<2.0.0" "ml_dtypes>=0.5.0" "onnx>=1.16.0" &&     pip install --no-cache-dir fastapi uvicorn pydantic python-multipart &&     pip install --no-cache-dir -e .
 
 ENV PORT=8000
 

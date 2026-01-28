@@ -5,23 +5,74 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      - CLI_ARGS=
-      - PYTORCH_XPU_ALLOC_CONF=max_split_size_mb:512
-      - NEO_READ_XPU_MEM=1
-      - ONEAPI_DEVICE_SELECTOR=level_zero:0
-      - DONT_SET_DEVICE_MAP=1
-      - PYTORCH_TRITON_XPU_CACHE_DIR=/tmp/triton_cache
+      CLI_ARGS: ""
+      PYTORCH_XPU_ALLOC_CONF: "max_split_size_mb:512"
+      NEO_READ_XPU_MEM: "1"
+      ONEAPI_DEVICE_SELECTOR: "level_zero:0"
+      DONT_SET_DEVICE_MAP: "1"
+      PYTORCH_TRITON_XPU_CACHE_DIR: /tmp/triton_cache
+      COOLIFY_BRANCH: '"master"'
+      COOLIFY_RESOURCE_UUID: sk80kgw4wco0k4kk0ggw0wsg
+      COOLIFY_CONTAINER_NAME: chatterbox-sk80kgw4wco0k4kk0ggw0wsg-141329386972
+      SERVICE_URL_CHATTERBOX: "https://chatterbox.whattadata.it"
+      SERVICE_FQDN_CHATTERBOX: chatterbox.whattadata.it
+      COOLIFY_URL: "https://chatterbox.whattadata.it"
+      COOLIFY_FQDN: chatterbox.whattadata.it
+      SERVICE_NAME_CHATTERBOX: chatterbox
     devices:
-      - /dev/dri:/dev/dri
-      - /dev/dri/renderD128:/dev/dri/renderD128
+      - "/dev/dri:/dev/dri"
+      - "/dev/dri/renderD128:/dev/dri/renderD128"
     ipc: host
     group_add:
       - 109
     security_opt:
-      - label:disable
+      - "label:disable"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      test:
+        - CMD
+        - curl
+        - "-f"
+        - "http://localhost:8000/"
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
+    container_name: chatterbox-sk80kgw4wco0k4kk0ggw0wsg-141329386972
+    restart: unless-stopped
+    labels:
+      - coolify.managed=true
+      - coolify.version=4.0.0-beta.462
+      - coolify.applicationId=28
+      - coolify.type=application
+      - coolify.name=chatterbox-sk80kgw4wco0k4kk0ggw0wsg-141329386972
+      - coolify.resourceName=unimib-whattadatachatterboxmaster-sk80kgw4wco0k4kk0ggw0wsg
+      - coolify.projectName=chatterbox
+      - coolify.serviceName=unimib-whattadatachatterboxmaster-sk80kgw4wco0k4kk0ggw0wsg
+      - coolify.environmentName=production
+      - coolify.pullRequestId=0
+      - traefik.enable=true
+      - traefik.http.middlewares.gzip.compress=true
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+      - traefik.http.routers.http-0-sk80kgw4wco0k4kk0ggw0wsg-chatterbox.entryPoints=http
+      - traefik.http.routers.http-0-sk80kgw4wco0k4kk0ggw0wsg-chatterbox.middlewares=redirect-to-https
+      - "traefik.http.routers.http-0-sk80kgw4wco0k4kk0ggw0wsg-chatterbox.rule=Host(`chatterbox.whattadata.it`) && PathPrefix(`/`)"
+      - traefik.http.routers.https-0-sk80kgw4wco0k4kk0ggw0wsg-chatterbox.entryPoints=https
+      - traefik.http.routers.https-0-sk80kgw4wco0k4kk0ggw0wsg-chatterbox.middlewares=gzip
+      - "traefik.http.routers.https-0-sk80kgw4wco0k4kk0ggw0wsg-chatterbox.rule=Host(`chatterbox.whattadata.it`) && PathPrefix(`/`)"
+      - traefik.http.routers.https-0-sk80kgw4wco0k4kk0ggw0wsg-chatterbox.tls.certresolver=zerossl
+      - traefik.http.routers.https-0-sk80kgw4wco0k4kk0ggw0wsg-chatterbox.tls=true
+      - "caddy_0.encode=zstd gzip"
+      - "caddy_0.handle_path.0_reverse_proxy={{upstreams}}"
+      - "caddy_0.handle_path=/*"
+      - caddy_0.header=-Server
+      - "caddy_0.try_files={path} /index.html /index.php"
+      - "caddy_0=https://chatterbox.whattadata.it"
+      - caddy_ingress_network=sk80kgw4wco0k4kk0ggw0wsg
+    networks:
+      sk80kgw4wco0k4kk0ggw0wsg: null
+    env_file:
+      - .env
+networks:
+  sk80kgw4wco0k4kk0ggw0wsg:
+    name: sk80kgw4wco0k4kk0ggw0wsg
+    external: true
