@@ -4,9 +4,8 @@ WORKDIR /app
 
 COPY . .
 
-# Install dependencies including the package itself in editable mode
-# Removed --no-deps so that dependencies in pyproject.toml (like librosa) are installed
-RUN pip install --no-cache-dir fastapi uvicorn pydantic python-multipart &&     pip install --no-cache-dir -e .
+# Upgrade pip and setuptools, then install dependencies
+RUN pip install --no-cache-dir --upgrade pip setuptools &&     pip install --no-cache-dir fastapi uvicorn pydantic python-multipart &&     pip install --no-cache-dir -e .
 
 ENV PORT=8000
 
