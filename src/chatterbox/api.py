@@ -4,6 +4,7 @@ import torch
 import numpy as np
 import soundfile as sf
 from fastapi import FastAPI, HTTPException, Header, Response, status
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional
 from contextlib import asynccontextmanager
@@ -51,6 +52,20 @@ class ChatterboxTTSRequest(BaseModel):
     model_id: Optional[str] = "chatterbox_turbo"
     language_code: Optional[str] = None
     voice_settings: Optional[VoiceSettings] = None
+
+@app.get("/")
+def healthcheck():
+    """
+    Root healthcheck endpoint used by docker-compose.
+    Returns 200 when the application is up. Includes model initialization status.
+    """
+    return JSONResponse(
+        status_code=200,
+        content={
+            "status": "ok",
+            "model_initialized": model is not None
+        }
+    )
 
 @app.post("/v1/text-to-speech/{voice_id}")
 def text_to_speech_elevenlabs(
