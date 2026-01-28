@@ -5,7 +5,8 @@ WORKDIR /app
 COPY . .
 
 # Upgrade pip and setuptools, then install dependencies
-RUN pip install --no-cache-dir --upgrade pip setuptools &&     pip install --no-cache-dir fastapi uvicorn pydantic python-multipart &&     pip install --no-cache-dir -e .
+# Explicitly install ml_dtypes first to ensure compatibility with onnx
+RUN pip install --no-cache-dir --upgrade pip setuptools &&     pip install --no-cache-dir "ml_dtypes>=0.5.0" &&     pip install --no-cache-dir fastapi uvicorn pydantic python-multipart &&     pip install --no-cache-dir -e .
 
 ENV PORT=8000
 
