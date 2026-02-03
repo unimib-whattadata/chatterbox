@@ -101,9 +101,22 @@ class Conditionals:
 
     @classmethod
     def load(cls, fpath, map_location="cpu"):
+        # Normalize map_location so we don't pass unsupported devices (e.g. "xpu") directly to torch.load.
+        # For devices other than CUDA, we load tensors to CPU first and then move them to the target device.
         if isinstance(map_location, str):
-            map_location = torch.device(map_location)
-        kwargs = torch.load(fpath, map_location=map_location, weights_only=True)
+            if map_location == "xpu":
+                torch_map_location = torch.device("cpu")
+            else:
+                torch_map_location = torch.device(map_location)
+        elif isinstance(map_location, torch.device):
+            if map_location.type == "xpu":
+                torch_map_location = torch.device("cpu")
+            else:
+                torch_map_location = map_location
+        else:
+            torch_map_location = map_location
+
+        kwargs = torch.load(fpath, map_location=torch_map_location, weights_only=True)
         return cls(T3Cond(**kwargs['t3']), kwargs['gen'])
 
 
@@ -133,8 +146,9 @@ class ChatterboxTurboTTS:
     def from_local(cls, ckpt_dir, device) -> 'ChatterboxTurboTTS':
         ckpt_dir = Path(ckpt_dir)
 
-        # Always load to CPU first for non-CUDA devices to handle CUDA-saved models
-        if device in ["cpu", "mps"]:
+        # Always load to CPU first for non-CUDA devices (including XPU) to handle CUDA-saved models.
+        # This prevents torch.load from attempting to restore CUDA storages when CUDA isn't available.
+        if device in ["cpu", "mps", "xpu"]:
             map_location = torch.device('cpu')
         else:
             map_location = None
@@ -184,6 +198,12 @@ class ChatterboxTurboTTS:
 
     @classmethod
     def from_pretrained(cls, device) -> 'ChatterboxTurboTTS':
+        # Check if XPU is requested and available. If not available, fall back to CPU.
+        if device == "xpu":
+            if not (hasattr(torch, "xpu") and getattr(torch.xpu, "is_available", lambda: False)()):
+                print("XPU requested but not available in this PyTorch build; falling back to CPU.")
+                device = "cpu"
+
         # Check if MPS is available on macOS
         if device == "mps" and not torch.backends.mps.is_available():
             if not torch.backends.mps.is_built():
