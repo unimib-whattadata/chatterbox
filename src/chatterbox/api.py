@@ -3,6 +3,7 @@ import os
 import torch
 import numpy as np
 import soundfile as sf
+import asyncio
 from fastapi import FastAPI, HTTPException, Header, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -18,6 +19,8 @@ from chatterbox.tts import ChatterboxTTS
 
 # Global model
 model = None
+# Global lock for inference
+lock = asyncio.Lock()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -68,7 +71,7 @@ def healthcheck():
     )
 
 @app.post("/v1/text-to-speech/{voice_id}")
-def text_to_speech_elevenlabs(
+async def text_to_speech_elevenlabs(
     voice_id: str,
     request: ChatterboxTTSRequest,
     xi_api_key: str = Header(None, alias="xi-api-key", description="CHATTERBOX_API_KEY")
@@ -115,11 +118,17 @@ def text_to_speech_elevenlabs(
 
     # Generate
     try:
-        wav_tensor = model.generate(
-            request.text,
-            exaggeration=exaggeration,
-            audio_prompt_path=audio_prompt_path
-        )
+        loop = asyncio.get_running_loop()
+        async with lock:
+            wav_tensor = await loop.run_in_executor(
+                None,
+                lambda: model.generate(
+                    request.text,
+                    exaggeration=exaggeration,
+                    audio_prompt_path=audio_prompt_path
+                )
+            )
+        
         # wav_tensor is [1, T]
         wav_numpy = wav_tensor.squeeze(0).cpu().numpy()
 
