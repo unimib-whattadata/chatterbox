@@ -15,7 +15,7 @@ try:
 except ImportError:
     pass
 
-from chatterbox.tts import ChatterboxTTS
+from chatterbox.tts_turbo import ChatterboxTurboTTS
 
 # Global model
 model = None
@@ -35,9 +35,9 @@ async def lifespan(app: FastAPI):
     else:
         device = "cpu"
 
-    print(f"Loading ChatterboxTTS on {device}...", flush=True)
+    print(f"Loading ChatterboxTurboTTS on {device}...", flush=True)
     # Using from_pretrained to load the model
-    model = ChatterboxTTS.from_pretrained(device=device)
+    model = ChatterboxTurboTTS.from_pretrained(device=device)
     print("Model loaded.", flush=True)
     yield
     # Cleanup if needed
